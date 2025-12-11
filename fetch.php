@@ -58,7 +58,7 @@ foreach ($posts as $p) {
     $name = $p["title"]["rendered"] ?? '';
     $slug = $p["slug"] ?? '';
     $description = $p["content"]["rendered"] ?? '';
-    $created_at = $p["date"] ?? date('Y-m-d H:i:s');
+    $created_at = date('Y-m-d H:i:s');
 
     // Skip duplicates
     $check = $pdo->prepare("SELECT id FROM posts_staging WHERE external_id=?");

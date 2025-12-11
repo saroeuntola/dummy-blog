@@ -3,146 +3,145 @@ require './services/checkroles.php';
 require './services/db.php';
 $pdo = dbConn();
 protectRoute([1, 3]);
+
 // Read filter from URL
 $statusFilter = $_GET['status'] ?? 'all';
 
-$query = "SELECT * FROM posts_staging";
-$params = [];
+// Pagination setup
+$limit = 12;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
 
+// Base query
+$query = "SELECT * FROM posts_staging";
+$countQuery = "SELECT COUNT(*) FROM posts_staging";
+$where = "";
+
+// Filter conditions
 if ($statusFilter === 'draft') {
-    $query .= " WHERE status='draft'";
+    $where = " WHERE status='draft'";
 } elseif ($statusFilter === 'approved') {
-    $query .= " WHERE status='approved'";
+    $where = " WHERE status='approved'";
 }
 
-$query .= " ORDER BY created_at DESC";
+$query .= $where . " ORDER BY id DESC LIMIT :limit OFFSET :offset";
+$countQuery .= $where;
 
+// Fetch total posts count
+$stmtCount = $pdo->prepare($countQuery);
+$stmtCount->execute();
+$totalPosts = $stmtCount->fetchColumn();
+$totalPages = ceil($totalPosts / $limit);
+
+// Fetch posts
 $stmt = $pdo->prepare($query);
-$stmt->execute($params);
+$stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+$stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+$stmt->execute();
 $posts = $stmt->fetchAll();
 ?>
-<!DOCTYPE html>
+
 <html lang="en">
 
 <head>
     <meta charset="utf-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staging - Posts Grid</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .tabs {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .tab {
-            padding: 8px 16px;
-            border-radius: 6px;
-            background: #f0f0f0;
-            text-decoration: none;
-            font-weight: bold;
-            color: #333;
-            transition: 0.2s;
-        }
-
-        .tab:hover {
-            background: #ddd;
-        }
-
-        .tab.active {
-            background: #3b82f6;
-            color: #fff;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-
-        }
-        .header .btn {
-            background: #e74c3c;
-            color: white;
-            padding: 8px 16px;
-            border: none;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-    </style>
+    <link rel="stylesheet" href="./css/home.css"">
 </head>
 
 <body>
-    <header class="header">
-        <div>
-        <h1>Staging — Cricket News Posts </h1>
-        <p>Filter by status, review, edit, and push to public site.</p>
+<header class=" header">
+    <div>
+        <h1>Staging — Cricket News Posts</h1>
+    </div>
 
-        </div>
+    <div>
+        <p>
+            Logged in as:
+            <strong><?= htmlspecialchars($_SESSION['username'] ?? 'User'); ?></strong>
+        </p>
+        <a class="btn" href="logout.php">Logout</a>
 
-        <div>
-            <p>
-               Logged in as: <strong> <?= htmlspecialchars($_SESSION['username'] ?? 'User'); ?></strong>
-            </p>
-            <a class="btn" href="logout.php">Logout</a>
-        </div>
-     
-       
+
+    </div>
     </header>
 
+     <!-- DELETE ALL APPROVED POSTS BUTTON -->
+        <a class="btn btn-danger" style="margin-bottom: 20px;"
+            href="delete-all.php?status=approved"
+            onclick="return confirm('Are you SURE you want to DELETE ALL APPROVED POSTS? This cannot be undone.');">
+            Delete All Approved Posts
+        </a>
     <!-- FILTER TABS -->
     <nav class="tabs">
+   
         <a href="index.php?status=all" class="tab <?= $statusFilter === 'all' ? 'active' : '' ?>">All</a>
         <a href="index.php?status=draft" class="tab <?= $statusFilter === 'draft' ? 'active' : '' ?>">Draft</a>
         <a href="index.php?status=approved" class="tab <?= $statusFilter === 'approved' ? 'active' : '' ?>">Approved</a>
     </nav>
 
     <main class="grid">
-        <?php if (empty($posts)): ?>
+        <?php if (empty($posts)) : ?>
             <p>No posts found for this filter.</p>
-            <?php else: foreach ($posts as $post): ?>
+
+            <?php else :
+            foreach ($posts as $post) : ?>
                 <article class="card">
                     <div class="card-image">
-                        <?php if (!empty($post['image'])): ?>
+                        <?php if (!empty($post['image'])) : ?>
                             <img src="<?= htmlspecialchars($post['image']) ?>" alt="<?= htmlspecialchars($post['name'] ?? '') ?>">
-                        <?php else: ?>
+                        <?php else : ?>
                             <div class="placeholder">No image</div>
                         <?php endif; ?>
                     </div>
 
                     <div class="card-body">
                         <h2><?= htmlspecialchars(html_entity_decode($post['name'] ?? '')) ?></h2>
+
                         <p class="meta">
                             Status: <strong><?= htmlspecialchars($post['status']) ?></strong>
                         </p>
-                        <!-- <p class="excerpt">
-                            <?= htmlspecialchars(
-                                mb_strimwidth(
-                                    html_entity_decode(strip_tags($post['description'] ?? '')),
-                                    0,
-                                    180,
-                                    '...'
-                                )
-                            ) ?>
-                        </p> -->
-
 
                         <div class="actions">
                             <a class="btn" href="view.php?id=<?= $post['id'] ?>">View Details</a>
 
-                            <?php if ($post['status'] !== 'approved'): ?>
-                                <a class="btn btn-primary" href="push.php?id=<?= $post['id'] ?>" onclick="return confirm('Push this post to live site?')">Push to Public</a>
-                            <?php else: ?>
+                            <?php if ($post['status'] !== 'approved') : ?>
+                                <a class="btn btn-primary"
+                                    href="push.php?id=<?= $post['id'] ?>"
+                                    onclick="return confirm('Push this post to live site?')">Push to Public</a>
+                            <?php else : ?>
                                 <span class="btn-disabled">Approved</span>
                             <?php endif; ?>
+
+                            <!-- DELETE BUTTON -->
+                            <a class="btn-danger"
+                                href="delete.php?id=<?= $post['id'] ?>"
+                                onclick="return confirm('Are you sure you want to DELETE this post? This action cannot be undone.');">
+                                Delete
+                            </a>
                         </div>
+
 
                     </div>
                 </article>
         <?php endforeach;
         endif; ?>
     </main>
-</body>
+
+    <!-- Pagination -->
+    <?php if ($totalPages > 1): ?>
+        <div class="pagination">
+            <?php
+            for ($i = 1; $i <= $totalPages; $i++) {
+                $active = ($i == $page) ? "active" : "";
+                echo "<a class='$active' href='index.php?status=$statusFilter&page=$i'>$i</a>";
+            }
+            ?>
+        </div>
+    <?php endif; ?>
+
+    </body>
 
 </html>

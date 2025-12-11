@@ -1,10 +1,11 @@
 <?php
 
 require './vendor/autoload.php';
-            require './services/checkroles.php';
-            require './services/db.php';
-            $pdo = dbConn();
-            protectRoute([1, 3]);
+require './services/checkroles.php';
+require './services/db.php';
+$pdo = dbConn();
+protectRoute([1, 3]);
+
 use Stichoza\GoogleTranslate\GoogleTranslate;
 
 $pdo = dbConn();
@@ -117,7 +118,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
 
         $message = "Post saved successfully!";
-
+        header(
+            'Location: view.php?id=' . $id
+        );
         // Reload latest DB data
         $stmt = $pdo->prepare("SELECT * FROM posts_staging WHERE id=?");
         $stmt->execute([$id]);
@@ -131,12 +134,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <head>
     <meta charset="UTF-8">
-    <title>Edit Post #<?= $post['id'] ?></title>
+    <title>Edit Post: <?= $post['name'] ?></title>
 
     <script src="./js/tinymce/tinymce.min.js"></script>
-
-
-
     <style>
         body {
             font-family: Arial;
@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="container">
         <a href="view.php?id=<?= $post['id'] ?>">&larr; Back to View</a>
 
-        <h1>Edit Post #<?= $post['id'] ?></h1>
+        <h1>Edit Post: <?= $post['name'] ?></h1>
 
         <?php if ($message): ?>
             <div class="message"><?= htmlspecialchars($message) ?></div>
@@ -219,12 +219,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="name" value="<?= htmlspecialchars(html_entity_decode($post['name'] ?? '')) ?>" required>
 
             <label>Description (EN)</label>
-            <textarea class="tinymce" name="description"><?= htmlspecialchars($post['description'] ?? '') ?></textarea>
+            <textarea class="tinymce" name="description">  <?= str_replace('"', '', html_entity_decode($post['description'])) ?></textarea>
 
 
 
             <label>Meta Description (EN)</label>
-            <textarea name="meta_desc"><?= htmlspecialchars($post['meta_desc'] ?? '') ?></textarea>
+            <textarea name="meta_desc" rows="6"><?= htmlspecialchars($post['meta_desc'] ?? '') ?></textarea>
 
             <label>Meta Keywords (EN)</label>
             <input type="text" name="meta_keyword" value="<?= htmlspecialchars($post['meta_keyword'] ?? '') ?>">
@@ -238,11 +238,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="text" name="name_bn" value="<?= htmlspecialchars(html_entity_decode($post['name_bn'] ?? '')) ?>">
 
             <label>Description (BN)</label>
-            <textarea class="tinymce" name="description_bn"><?= htmlspecialchars($post['description_bn'] ?? '') ?></textarea>
-
+            <textarea class="tinymce" name="description_bn">  <?= str_replace('"', '', html_entity_decode($post['description_bn'] ?? '')) ?></textarea>
 
             <label>Meta Description (BN)</label>
-            <textarea name="meta_desc_bn"><?= htmlspecialchars($post['meta_desc_bn'] ?? '') ?></textarea>
+            <textarea name="meta_desc_bn" rows="6"><?= htmlspecialchars($post['meta_desc_bn'] ?? '') ?></textarea>
 
             <label>Meta Keywords (BN)</label>
             <input type="text" name="meta_keyword_bn" value="<?= htmlspecialchars($post['meta_keyword_bn'] ?? '') ?>">
@@ -264,7 +263,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         const example_image_upload_handler = (blobInfo, progress) => new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
             xhr.withCredentials = true; // send cookies if needed
-            xhr.open('POST', 'http://dummy-blog:8080/upload_image.php'); // PHP endpoint
+            xhr.open('POST', 'https://link123dzo.net/upload_image.php'); // PHP endpoint
 
             xhr.upload.onprogress = (e) => {
                 progress(e.loaded / e.total * 100);

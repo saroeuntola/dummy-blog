@@ -5,7 +5,7 @@ require './services/db.php';
 use GuzzleHttp\Client;
 use Symfony\Component\DomCrawler\Crawler;
 
-$pdo = dbConn(); // your PDO connection
+$pdo = dbConn();
 
 $client = new Client(['verify' => false, 'timeout' => 10, 'headers' => ['User-Agent' => 'Mozilla/5.0']]);
 
