@@ -45,7 +45,7 @@ $posts = $stmt->fetchAll();
 
 <head>
     <meta charset="utf-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Staging - Posts Grid</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="./css/home.css"">
@@ -68,15 +68,20 @@ $posts = $stmt->fetchAll();
     </div>
     </header>
 
-     <!-- DELETE ALL APPROVED POSTS BUTTON -->
-        <a class="btn btn-danger" style="margin-bottom: 20px;"
-            href="delete-all.php?status=approved"
-            onclick="return confirm('Are you SURE you want to DELETE ALL APPROVED POSTS? This cannot be undone.');">
-            Delete All Approved Posts
-        </a>
+    <!-- DELETE ALL APPROVED POSTS BUTTON -->
+    <a class="btn btn-danger" style="margin-bottom: 20px;"
+        href="delete-all.php?status=approved"
+        onclick="return confirm('Are you SURE you want to DELETE ALL APPROVED POSTS? This cannot be undone.');">
+        Delete All Approved Posts
+    </a>
+
+    <a class="tab" style="margin-bottom: 20px;"
+        href="create.php">
+        + Add Post
+    </a>
     <!-- FILTER TABS -->
     <nav class="tabs">
-   
+
         <a href="index.php?status=all" class="tab <?= $statusFilter === 'all' ? 'active' : '' ?>">All</a>
         <a href="index.php?status=draft" class="tab <?= $statusFilter === 'draft' ? 'active' : '' ?>">Draft</a>
         <a href="index.php?status=approved" class="tab <?= $statusFilter === 'approved' ? 'active' : '' ?>">Approved</a>
